@@ -39,7 +39,7 @@ group :development do
 end
 
 group :test do
-  gem 'ffaker'
+  gem 'faker'
   gem 'simplecov', require: false
   gem 'minitest'
   gem 'shoulda-matchers'

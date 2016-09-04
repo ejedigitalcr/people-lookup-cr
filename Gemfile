@@ -7,9 +7,9 @@ gem 'rails', '~> 5.0.0'
 gem 'sqlite3'
 # Use Puma as the app server
 gem 'puma'
-
 gem 'aws-record'
-
+gem 'httparty'
+gem 'rubyzip'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder'
 # Use Redis adapter to run Action Cable in production
@@ -36,6 +36,7 @@ group :development do
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   gem 'spring'
   gem 'spring-watcher-listen'
+  gem 'rubocop', require: false
 end
 
 group :test do

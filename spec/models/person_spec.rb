@@ -12,5 +12,4 @@ RSpec.describe Person, type: :model do
   it { is_expected.to validate_presence_of(:last_name_2) }
   it { is_expected.to validate_inclusion_of(:gender).in_array([1, 2]) }
 
-
 end

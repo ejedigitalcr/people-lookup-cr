@@ -43,11 +43,12 @@ class PeopleController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_person
-      @person = Person.find_by_id(params[:id])
+      @person = Person.find_by_id!(params[:id])
     end
 
     # Never trust parameters from the scary internet, only allow the white list through.
     def person_params
       params.fetch(:person, {})
     end
+
 end

@@ -1,4 +1,5 @@
 class Person
+  class RecordNotFoundError < Exception; end
   include Aws::Record
   include ActiveModel::Validations
 
@@ -13,14 +14,22 @@ class Person
   string_attr :last_name_2
   integer_attr :gender
   string_attr :state
-  string_attr :city
+	string_attr :city
   string_attr :district
 
   def self.find_by_id(id)
     find(id: id)
   end
 
+  def self.find_by_id!(id)
+    person = find_by_id(id)
+    raise  Person::RecordNotFoundError if person.nil?
+    person
+  end
+
   def to_param
     id
   end
+
+
 end

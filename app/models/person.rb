@@ -20,7 +20,14 @@ class Person
     find(id: id)
   end
 
+  def self.find_by_id!(id)
+    person = find_by_id(id)
+    raise  ApplicationRecord::RecordNotFoundError if person.nil?
+    person
+  end
+
   def to_param
     id
   end
+
 end

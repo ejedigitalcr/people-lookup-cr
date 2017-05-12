@@ -44,6 +44,11 @@ class DataImporter
     end
   end
 
+  def initialize(options = {})
+    @skip_download = options[:skip_download]
+    @skip_extract = options[:skip_extract]
+  end
+
   def file_changed?(file_path = ZIP_FILE_PATH)
     @digest ||= DataImporter::File.calculate_digest(file_path)
     changed = true
@@ -83,7 +88,7 @@ class DataImporter
     # Create import path if it doesn't exist
     FileUtils.mkdir_p(IMPORT_PATH)
 
-    if options[:skip_download]
+    if @skip_download
       @file = DataImporter::File.open(ZIP_FILE_PATH)
     else
       log "Downloading #{REMOTE_ZIP_PATH}..."
@@ -91,10 +96,12 @@ class DataImporter
     end
 
     log "Importing file #{ZIP_FILE_PATH}"
-    if file_changed?
-      log "Import file changed, extracting files..."
-      DataImporter::File.extract(ZIP_FILE_PATH, IMPORT_PATH,
-                                 [PEOPLE_FILE_NAME, ADDRESSES_FILE_NAME])
+    if @skip_download || file_changed?
+      unless @skip_extract
+        log "Extracting files..."
+        DataImporter::File.extract(ZIP_FILE_PATH, IMPORT_PATH,
+                                   [PEOPLE_FILE_NAME, ADDRESSES_FILE_NAME])
+      end
 
       log "Loading addresses..."
       addresses = Hash.new
@@ -126,10 +133,11 @@ class DataImporter
           city: address[:city],
           district: address[:district]
         )
-        person.save
+        # Force a record overwrite if it exists
+        person.save(force: true)
         record_count += 1
         # Print a progress report every 100000 records
-        log "#{record_count} records imported" if (record_count % 100000) == 0
+        log "#{record_count} records imported" if (record_count % 1000) == 0
       end
       log "#{record_count} records imported"
 

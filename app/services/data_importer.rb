@@ -22,6 +22,10 @@ class DataImporter
         file
       end
 
+      def open(local_path)
+        ::File.new(local_path, "r")
+      end
+
       # Extract a ZIP file into a specific path
       def extract(zip_file, target_path, entries = [])
         Zip::File.open(zip_file) do |file|
@@ -75,13 +79,18 @@ class DataImporter
   #     the address data from the hash
   #   - If the import is successful, replace tmp/data_import/last_digest.md5
   #     with the digest from the recently imported file
-  def call
+  def call(options = {})
     # Create import path if it doesn't exist
     FileUtils.mkdir_p(IMPORT_PATH)
 
-    log "Downloading #{REMOTE_ZIP_PATH}..."
-    @file = DataImporter::File.download(REMOTE_ZIP_PATH, ZIP_FILE_PATH)
+    if options[:skip_download]
+      @file = DataImporter::File.open(ZIP_FILE_PATH)
+    else
+      log "Downloading #{REMOTE_ZIP_PATH}..."
+      @file = DataImporter::File.download(REMOTE_ZIP_PATH, ZIP_FILE_PATH)
+    end
 
+    log "Importing file #{ZIP_FILE_PATH}"
     if file_changed?
       log "Import file changed, extracting files..."
       DataImporter::File.extract(ZIP_FILE_PATH, IMPORT_PATH,
@@ -95,8 +104,10 @@ class DataImporter
         district = normalize_value(line[3])
         addresses[line[0]] = { state: state, city: city, district: district }
       end
+      log "#{addresses.size} addresses loaded into memory"
 
       log "Importing data into the database..."
+      record_count = 0
       CSV.foreach(PEOPLE_FILE_PATH, encoding: CSV_ENCODING) do |line|
         address = addresses[line[1]]
         id = normalize_value(line[0])
@@ -115,10 +126,12 @@ class DataImporter
           city: address[:city],
           district: address[:district]
         )
-        puts person.inspect
-        puts "______________________"
-        #TODO: Insert Data in DB Code
+        person.save
+        record_count += 1
+        # Print a progress report every 100000 records
+        log "#{record_count} records imported" if (record_count % 100000) == 0
       end
+      log "#{record_count} records imported"
 
       log "Updating digest file..."
       update_digest_file

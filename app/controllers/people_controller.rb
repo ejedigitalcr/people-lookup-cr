@@ -1,12 +1,6 @@
 class PeopleController < ApplicationController
   before_action :set_person, only: [:show, :update, :destroy]
 
-  # GET /people
-  # GET /people.json
-  def index
-    @people = Person.all
-  end
-
   # GET /people/1
   # GET /people/1.json
   def show

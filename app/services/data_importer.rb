@@ -11,6 +11,11 @@ class DataImporter
   ADDRESSES_FILE_PATH = "#{IMPORT_PATH}/#{ADDRESSES_FILE_NAME}"
   CSV_ENCODING = "iso-8859-1:utf-8"
 
+  IMPORT_PATH2 = "tmp/data_import/old"
+  PEOPLE_FILE_PATH2 = "#{IMPORT_PATH2}/#{PEOPLE_FILE_NAME}"
+  OLD_ZIP_PATH = "#{ZIP_FILE_PATH}.last"
+  OLD_FILE_NAME = "#{IMPORT_PATH2}/PADRON_COMPLETO2.txt"
+
   class File
     class << self
       # Download a remote file to a local path
@@ -103,43 +108,126 @@ class DataImporter
                                    [PEOPLE_FILE_NAME, ADDRESSES_FILE_NAME])
       end
 
+      counter = 0
       log "Loading addresses..."
       addresses = Hash.new
       CSV.foreach(ADDRESSES_FILE_PATH, encoding: CSV_ENCODING) do |line|
+
         state = normalize_value(line[1])
         city = normalize_value(line[2])
         district = normalize_value(line[3])
         addresses[line[0]] = { state: state, city: city, district: district }
+
       end
       log "#{addresses.size} addresses loaded into memory"
 
-      log "Importing data into the database..."
-      record_count = 0
+      counter3 = 0
+      newVersion = Hash.new
       CSV.foreach(PEOPLE_FILE_PATH, encoding: CSV_ENCODING) do |line|
         address = addresses[line[1]]
         id = normalize_value(line[0])
+        gender = normalize_value(line[2])
         name = normalize_value(line[5])
         last_name_1 = normalize_value(line[6])
         last_name_2 = normalize_value(line[7])
-        gender = normalize_value(line[2])
+        newVersion[id] = { id: id, address: address, gender: gender, name: name, last_name_1: last_name_1, last_name_2: last_name_2 }
 
-        person = Person.new(
-          id: id,
-          name: name,
-          last_name_1: last_name_1,
-          last_name_2: last_name_2,
-          gender: gender,
-          state: address[:state],
-          city: address[:city],
-          district: address[:district]
-        )
-        # Force a record overwrite if it exists
-        person.save(force: true)
-        record_count += 1
-        # Print a progress report every 100000 records
-        log "#{record_count} records imported" if (record_count % 1000) == 0
+        if counter3 == 200 || counter3 == 500
+          puts "loading new data"
+        elsif counter3 == 700
+          puts "end of test of 700 people"
+          break
+        end
+        counter3 += 1
       end
-      log "#{record_count} records imported"
+
+      if ::File.exist?(OLD_ZIP_PATH)
+        puts "existe"
+        counter2 = 0
+        oldVersion = Hash.new
+
+        FileUtils.mkdir_p(IMPORT_PATH2)
+
+        Zip::File.open(OLD_ZIP_PATH) do |file|
+          file.each do |entry|
+            if entry.name == "PADRON_COMPLETO.txt"
+              entry.extract("#{IMPORT_PATH2}/PADRON_COMPLETO.txt")
+              log "Extracting old file"
+              
+            end
+          end
+        end
+
+        ::File.rename("#{IMPORT_PATH2}/PADRON_COMPLETO.txt", "#{IMPORT_PATH2}/PADRON_COMPLETO2.txt")
+
+        CSV.foreach(OLD_FILE_NAME, encoding: CSV_ENCODING) do |line|
+          address = addresses[line[1]]
+          id = normalize_value(line[0])
+          gender = normalize_value(line[2])
+          name = normalize_value(line[5])
+          last_name_1 = normalize_value(line[6])
+          last_name_2 = normalize_value(line[7])
+          oldVersion[id] = { id: id, address: address, gender: gender, name: name, last_name_1: last_name_1, last_name_2: last_name_2 }
+  
+          if counter2 == 200 || counter2 == 500
+            puts "datos de la versiion antigua ingresandose"
+          elsif counter2 == 700
+            puts "fin de archivo antiguo probado"
+            break
+          end
+          counter2 += 1
+
+          compare(oldVersion, newVersion)
+          
+        end
+
+        ::File.delete(OLD_FILE_NAME)
+
+      else
+        FileUtils.mkdir_p(IMPORT_PATH2)
+
+        log "saving all data, without compare. There is not a .last zip file"
+
+        log "#{addresses.size} addresses loaded into memory"
+
+        #save all, without compare
+        record_count = 0
+        CSV.foreach(PEOPLE_FILE_PATH, encoding: CSV_ENCODING) do |line|
+          address = addresses[line[1]]
+          id = normalize_value(line[0])
+
+          name = normalize_value(line[5])
+          last_name_1 = normalize_value(line[6])
+          last_name_2 = normalize_value(line[7])
+          gender = normalize_value(line[2])
+
+          person = Person.new(
+            id: id,
+            name: name,
+            last_name_1: last_name_1,
+            last_name_2: last_name_2,
+            gender: gender,
+            state: address[:state],
+            city: address[:city],
+            district: address[:district]
+          )
+    
+          if record_count == 250 || record_count == 500
+            puts "datos nuevos ingresandose"
+          elsif record_count == 700
+            puts "fin de archivo probado"
+            break
+          end
+          record_count += 1
+    
+          # Force a record overwrite if it exists
+          #person.save(force: true)
+          #record_count += 1
+          # Print a progress report every 100000 records
+          # log "#{record_count} records imported" if (record_count % 1000) == 0
+        end
+
+      end
 
       log "Updating digest file..."
       update_digest_file
@@ -152,6 +240,35 @@ class DataImporter
   end
 
   private
+
+    def compare(file1, file2)
+      existe = false
+      count = 0
+      count2 = 0
+      (file1.keys & file2.keys).each do |line|
+        if (file1[line][:id] == file2[line][:id] && file1[line][:address] == file2[line][:address] && file1[line][:name] == file2[line][:name] &&
+          file1[line][:gender] == file2[line][:gender] && file1[line][:last_name_1] == file2[line][:last_name_1] && file1[line][:last_name_2] == file2[line][:last_name_2]) then
+          existe = true
+          count += 1
+          puts "Person already exist"
+        else
+          existe = false
+          count2 += 1
+
+          person = Person.new(
+            id: file2[line][:id],
+            name: file2[line][:name],
+            gender: file2[line][:gender],
+            last_name_1: file2[line][:last_name_1],
+            last_name_2: file2[line][:last_name_2],
+          )
+          puts "Adding new Person: #{person.id}"
+          #save people to database
+
+        end
+        puts "BOOLEAN: #{existe} + contador1: + #{count} + contador2: + #{count2}"
+      end
+    end
 
     def normalize_value(value)
       return nil if value.blank?

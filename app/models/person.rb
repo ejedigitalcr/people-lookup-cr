@@ -22,7 +22,7 @@ class Person
 
   def self.find_by_id!(id)
     person = find_by_id(id)
-    raise  ApplicationRecord::RecordNotFoundError if person.nil?
+    raise ApplicationRecord::RecordNotFoundError if person.nil?
     person
   end
 

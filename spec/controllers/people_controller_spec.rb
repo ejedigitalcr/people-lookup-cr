@@ -21,29 +21,48 @@ require 'rails_helper'
 RSpec.describe PeopleController, type: :controller do
 
   describe "GET show.json" do
-    let!(:person) { create(:person) }
-    subject(:show_person) { get :show, params: { id: person.id, format: :json } }
+    let!(:person) { build(:person) }
+    let(:params) { { id: person.id, format: :json } }
 
-    it "assigns @person" do
-      show_person
-      expect(assigns(:person)).to be_a(Person)
+    subject(:show_person) { get :show, params: params }
 
-      %w(id name last_name_1 last_name_2 gender state city district).each do |field|
-        expect(assigns(:person).send(field)).to eq(person.send(field))
+    context 'with a valid person' do
+      before do
+        expect(Person).to receive(:find).and_return(person)
+      end
+
+      it "assigns @person" do
+        show_person
+        expect(assigns(:person)).to be_a(Person)
+
+        %w(id name last_name_1 last_name_2 gender state city district).each do |field|
+          expect(assigns(:person).send(field)).to eq(person.send(field))
+        end
+      end
+
+      it "renders the template show.json.jbuilder" do
+        expect(show_person).to be_successful
+        expect(show_person).to render_template("people/show")
       end
     end
 
-    it "renders the template show.json.jbuilder" do
-      expect(show_person).to be_successful
-      expect(show_person).to render_template("people/show")
-    end
-
     context "when an invalid id is provided" do
-      subject(:show_person) { get :show, params: { id: 0, format: :json} }
+      before do
+        expect(Person).to receive(:find).and_return(nil)
+      end
 
       it "returns an error code" do
         show_person
-        expect(response).to have_http_status(404)
+        expect(JSON.parse(response.body)).to eq({ 'status' => 404, 'message' => "Not found" })
+      end
+    end
+
+    context "when an invalid token" do
+      let(:params) { { id: person.id, format: :json, access_token: 'invalid' } }
+
+      it "returns an error code" do
+        show_person
+        expect(JSON.parse(response.body)).to eq({ 'status' => 403, 'message' => "Not authorized" })
       end
     end
   end

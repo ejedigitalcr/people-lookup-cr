@@ -24,10 +24,9 @@ RSpec.describe PeopleController, type: :controller do
     let!(:person) { create(:person) }
     subject(:show_person) { get :show, params: { id: person.id, format: :json } }
 
-    it "assigns @person " do
+    it "assigns @person" do
       show_person
       expect(assigns(:person)).to be_a(Person)
-
 
       %w(id name last_name_1 last_name_2 gender state city district).each do |field|
         expect(assigns(:person).send(field)).to eq(person.send(field))
@@ -39,7 +38,6 @@ RSpec.describe PeopleController, type: :controller do
       expect(show_person).to render_template("people/show")
     end
 
-
     context "when an invalid id is provided" do
       subject(:show_person) { get :show, params: { id: 0, format: :json} }
 
@@ -49,5 +47,4 @@ RSpec.describe PeopleController, type: :controller do
       end
     end
   end
-
 end

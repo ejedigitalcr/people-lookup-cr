@@ -17,8 +17,8 @@ class ApplicationController < ActionController::API
   end
 
   def authenticate
-    # Having a single access token should be good enough for now,
-    # as this API is not intended to be used by different clients (for now)
+    # Having a single access token should be good enough for now,
+    # as this API is not intended to be used by different clients (for now)
     if params[:access_token] != Rails.application.secrets.access_token
       raise NotAuthorizedError, "Invalid access token"
     end

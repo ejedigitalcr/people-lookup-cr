@@ -1,9 +1,9 @@
 source 'https://rubygems.org'
 
-ruby '3.1.2'
+ruby '3.2.0'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 6'
+gem 'rails'
 # Use postgres as the database for Active Record
 gem 'pg'
 # Use Puma as the app server
@@ -11,13 +11,6 @@ gem 'puma'
 gem 'aws-record'
 gem 'httparty'
 gem 'rubyzip'
-
-# We don't really need these net-gems, but there's an existing dependency issue:
-# https://github.com/mikel/mail/pull/1439/files
-# https://github.com/rails/rails/pull/44083/files
-gem 'net-imap'
-gem 'net-pop'
-gem 'net-smtp'
 
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder'

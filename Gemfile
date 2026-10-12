@@ -15,6 +15,8 @@ gem 'rubyzip'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder'
 gem 'ostruct'
+# TODO: remove when we fix this error from specs: unknown keyword: quirks_mode
+gem 'json', '~> 2'
 
 # Use Redis adapter to run Action Cable in production
 # gem 'redis'
@@ -51,6 +53,3 @@ group :test do
   gem 'database_cleaner'
   gem 'rails-controller-testing'
 end
-
-# Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]

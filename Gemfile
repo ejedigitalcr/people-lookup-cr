@@ -1,9 +1,9 @@
 source 'https://rubygems.org'
 
-ruby '4.0.2'
+ruby '4.0.9'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails'
+gem 'rails', '~> 8'
 # Use postgres as the database for Active Record
 gem 'pg'
 # Use Puma as the app server
@@ -15,8 +15,7 @@ gem 'rubyzip'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder'
 gem 'ostruct'
-# TODO: remove when we fix this error from specs: unknown keyword: quirks_mode
-gem 'json', '~> 2'
+gem 'json'
 
 # Use Redis adapter to run Action Cable in production
 # gem 'redis'
